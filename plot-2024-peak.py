@@ -19,16 +19,7 @@ def zeller(y, m, q):
     
     return h
 
-
-dispatch = []
-
-with open('TEP-Dispatch-2024.csv', newline='') as csvfile:
-    spamreader = csv.reader(csvfile, delimiter=',', quotechar='|')
-    for row in spamreader:
-        dispatch.append(row)
-    
-    print(str(dispatch[0]))
-    
+def findWeekOfPeak(dispatch):
     count  = 0
     largest = 0.0
     indexOfLargest = 0
@@ -40,6 +31,19 @@ with open('TEP-Dispatch-2024.csv', newline='') as csvfile:
             indexOfLargest = count
             date = row[1]
         count = count + 1
+        
+    return largest, indexOfLargest, date
+
+dispatch = []
+
+with open('TEP-Dispatch-2024.csv', newline='') as csvfile:
+    spamreader = csv.reader(csvfile, delimiter=',', quotechar='|')
+    for row in spamreader:
+        dispatch.append(row)
+    
+    print(str(dispatch[0]))
+    
+    largest, indexOfLargest, date = findWeekOfPeak(dispatch)
         
     dateArray = str(date).split(' ')[0].split('/')
     month = int(dateArray[0])
