@@ -34,6 +34,17 @@ def findWeekOfPeak(dispatch):
         
     return largest, indexOfLargest, date
 
+def stringToDate(date):
+    dateArray = str(date).split(' ')[0].split('/')
+    month = int(dateArray[0])
+    day = int(dateArray[1])
+    year = int(dateArray[2])
+    timeString = str(date).split(' ')[1] + " " + str(date).split(' ')[2]
+    isPm = str(date).split(' ')[2] == "p.m."
+    timeOffset = int(str(date).split(' ')[1]) + (isPm * 12)
+    timeInt = int(str(date).split(' ')[1])
+    return month, day, year, isPm, timeInt, timeOffset
+
 dispatch = []
 
 with open('TEP-Dispatch-2024.csv', newline='') as csvfile:
@@ -45,15 +56,9 @@ with open('TEP-Dispatch-2024.csv', newline='') as csvfile:
     
     largest, indexOfLargest, date = findWeekOfPeak(dispatch)
         
-    dateArray = str(date).split(' ')[0].split('/')
-    month = int(dateArray[0])
-    day = int(dateArray[1])
-    year = int(dateArray[2])
+    month, day, year, isPm, timeInt, timeOffset = stringToDate(date)
     
-    timeString = str(date).split(' ')[1] + " " + str(date).split(' ')[2]
     
-    isPm = str(date).split(' ')[2] == "p.m."
-    timeOffset = int(str(date).split(' ')[1]) + (isPm * 12)
     
     theday = datetime.datetime(year, month, day)
     print(str(date) + " largest: " + str(largest) + " indexOfLargest: " + str(indexOfLargest))
@@ -73,15 +78,7 @@ with open('TEP-Dispatch-2024.csv', newline='') as csvfile:
     count = 0
     while count < len(worstCaseUnsortedWithStorage):
         date = worstCaseUnsortedWithStorage[count][1]
-        dateArray = str(date).split(' ')[0].split('/')
-        month = int(dateArray[0])
-        day = int(dateArray[1])
-        year = int(dateArray[2])
-    
-        timeString = str(date).split(' ')[1] + " " + str(date).split(' ')[2]
-        
-        timeInt = int(str(date).split(' ')[1])
-        isPm = str(date).split(' ')[2] == "p.m."
+        month, day, year, isPm, timeInt, timeOffset = stringToDate(date)
         
         if(isPm and timeInt >= 2 and timeInt <= 8):
             worstCaseUnsortedWithStorage[count][8] = float(worstCaseUnsortedWithStorage[count][8]) + sizeOfStorageMWh/6
