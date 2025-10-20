@@ -63,7 +63,7 @@ with open('TEP-Dispatch-2024.csv', newline='') as csvfile:
     xAxis = []
     for row in dispatch[1:]:
         if firstIteration:
-            averageWeekList.append({'demand': float(row[2]), 'wind': float(row[6]), 'solar': float(row[7]), 'other': float(row[8]), 'gas': float(row[9]), 'coal': float(row[10]), 'weeks': 1})
+            averageWeekList.append({'demand': float(row[2]), 'wind': float(row[6]), 'solar': float(row[7]), 'other': float(row[8]), 'gas': float(row[9]), 'coal': float(row[10]), 'data': float(row[12]), 'weeks': 1})
             xAxis.append(count)
         else:
             try:
@@ -73,6 +73,7 @@ with open('TEP-Dispatch-2024.csv', newline='') as csvfile:
                 averageWeekList[count]['other'] = averageWeekList[count]['other'] + float(row[8])
                 averageWeekList[count]['gas'] = averageWeekList[count]['gas'] + float(row[9])
                 averageWeekList[count]['coal'] = averageWeekList[count]['coal'] + float(row[10])
+                averageWeekList[count]['data'] = averageWeekList[count]['data'] + float(row[12])
                 averageWeekList[count]['weeks'] = averageWeekList[count]['weeks'] + 1
             except ValueError as e:
                 print("Warning: Missing data on hour " + str(count))
@@ -93,13 +94,15 @@ with open('TEP-Dispatch-2024.csv', newline='') as csvfile:
         row['other'] = row['other'] / row['weeks']
         row['gas'] = row['gas'] / row['weeks']
         row['coal'] = row['coal'] / row['weeks']
+        row['data'] = row['data'] / row['weeks']
     
     # Sort this list 
     averageWeekListSorted = sorted(averageWeekList, key=lambda d: d['demand'], reverse=True)
     
     # Turn the array of dictionaries, into a dictionary of arrays
-    averageWeekDict = {'demand': [], 'wind': [], 'solar': [], 'other': [], 'gas': [], 'coal': []}
-    averageWeekDictStacked = {'demand': [], 'wind': [], 'solar': [], 'other': [], 'gas': [], 'coal': []}
+    averageWeekDict = {'demand': [], 'wind': [], 'solar': [], 'other': [], 'gas': [], 'coal': [], 'data': []}
+    averageWeekDictStacked = {'demand': [], 'wind': [], 'solar': [], 'other': [], 'gas': [], 'coal': [], 'data': []}
+    averageWeekDictStackedwData = {'demand': [], 'wind': [], 'solar': [], 'other': [], 'gas': [], 'coal': [], 'data': []}
     for row in averageWeekListSorted:
         averageWeekDict['demand'].append(row['demand'])
         averageWeekDict['wind'].append(row['wind'])
@@ -107,6 +110,7 @@ with open('TEP-Dispatch-2024.csv', newline='') as csvfile:
         averageWeekDict['other'].append(row['other'])
         averageWeekDict['gas'].append(row['gas'])
         averageWeekDict['coal'].append(row['coal'])
+        averageWeekDict['data'].append(row['data'])
         
         averageWeekDictStacked['demand'].append(row['demand'])
         averageWeekDictStacked['coal'].append(min(row['demand'], row['coal']))
@@ -114,11 +118,19 @@ with open('TEP-Dispatch-2024.csv', newline='') as csvfile:
         averageWeekDictStacked['wind'].append(min(row['demand'], row['wind'] + row['solar'] + row['coal']))
         averageWeekDictStacked['gas'].append(min(row['demand'], row['gas'] + row['wind'] + row['solar'] + row['coal']))
         averageWeekDictStacked['other'].append(min(row['demand'], row['other'] + row['gas'] + row['wind'] + row['solar'] + row['coal']))
+        
+        averageWeekDictStackedwData['demand'].append(row['demand'] + row['data'])
+        averageWeekDictStackedwData['coal'].append(min(row['demand'], row['coal']))
+        averageWeekDictStackedwData['solar'].append(min(row['demand'], row['solar'] + row['coal']))
+        averageWeekDictStackedwData['wind'].append(min(row['demand'], row['wind'] + row['solar'] + row['coal']))
+        averageWeekDictStackedwData['gas'].append(min(row['demand'], row['gas'] + row['wind'] + row['solar'] + row['coal']))
+        averageWeekDictStackedwData['other'].append(min(row['demand'], row['other'] + row['gas'] + row['wind'] + row['solar'] + row['coal']))
     
     if len(xAxis) != 168:
         print("Error: X Axis is not size 168, it is: " + str(len(xAxis)))
         sys.exit(1)
     
+    # Plot the data to a .png file 
     fig = plt.figure(figsize=(10, 8), dpi=100)
     
     plt.plot(xAxis, averageWeekDictStacked['demand'], label="demand", color='black')
@@ -132,7 +144,7 @@ with open('TEP-Dispatch-2024.csv', newline='') as csvfile:
     
     plt.title("TEP Dispatch Curve Average of 2024")
     plt.xlim(0, 167)
-    plt.ylim(0, max(averageWeekDictStacked['demand']))
+    plt.ylim(0, max(averageWeekDictStackedwData['demand']))
     plt.xlabel("Hour of Week (sorted)")  # Set x-axis label
     plt.ylabel("Energy Demand (MWh)")  # Set x-axis label
 
@@ -143,5 +155,28 @@ with open('TEP-Dispatch-2024.csv', newline='') as csvfile:
     #plt.show()
     plt.clf()
     
+    # Plot the data to a .png file 
+    fig = plt.figure(figsize=(10, 8), dpi=100)
     
+    plt.plot(xAxis, averageWeekDictStackedwData['demand'], label="demand", color='black')
+    plt.fill_between(xAxis, averageWeekDictStackedwData['demand'], label="energy imports", color='grey')
+    plt.fill_between(xAxis, averageWeekDictStackedwData['other'], label="other", color='white')
+    plt.fill_between(xAxis, averageWeekDictStackedwData['gas'], label="fracked gas", color='brown')
+    plt.fill_between(xAxis, averageWeekDictStackedwData['wind'], label="wind", color='blue')
+    plt.fill_between(xAxis, averageWeekDictStackedwData['solar'], label="solar", color='yellow')
+    plt.fill_between(xAxis, averageWeekDictStackedwData['coal'], label="coal", color='black')
+    
+    
+    plt.title("TEP Dispatch Curve Average of 2024 with Data Center")
+    plt.xlim(0, 167)
+    plt.ylim(0, max(averageWeekDictStackedwData['demand']))
+    plt.xlabel("Hour of Week (sorted)")  # Set x-axis label
+    plt.ylabel("Energy Demand (MWh)")  # Set x-axis label
+
+    
+    plt.legend()
+
+    plt.savefig('Ave-2024-w-datacenter.png', dpi=100)
+    #plt.show()
+    plt.clf()
     
