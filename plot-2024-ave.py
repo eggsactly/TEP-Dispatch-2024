@@ -6,6 +6,7 @@ from operator import itemgetter
 import matplotlib.pyplot as plt
 import copy
 import sys
+import statistics
 
 # year month day
 def zeller(y, m, q):
@@ -127,28 +128,76 @@ with open('TEP-Dispatch-2024.csv', newline='') as csvfile:
     print(str(maxGas))
        
     accumlatedNewGas = 0.0 
+    powerSold = 0.0
+    powerSoldAfterDataCenter = 0.0
+    powerPurchased = 0.0
+    powerPurchasedAfterDataCenter = 0.0
+    weeklyDataCenterEnergy = 0.0
     for row in averageWeekListSorted:
         averageWeekDictStackedwData['demand'].append(row['demand']     + row['data'])
         averageWeekDictStackedwData['coal'].append(min(row['demand'] + row['data'],                                                            row['coal']))
         averageWeekDictStackedwData['solar'].append(min(row['demand'] + row['data'],                                            row['solar'] + row['coal']))
         averageWeekDictStackedwData['wind'].append(min(row['demand']  + row['data'],                              row['wind'] + row['solar'] + row['coal']))
         averageWeekDictStackedwData['gas'].append(min(row['demand']   + row['data'],  row['gas'] +                row['wind'] + row['solar'] + row['coal']))
-        averageWeekDictStackedwData['other'].append(min(row['demand'] + row['data'] ,              row['gas'] + row['other'] + row['wind'] + row['solar'] + row['coal']))
+        averageWeekDictStackedwData['other'].append(min(row['demand'] + row['data'] ,     row['gas'] + row['other'] + row['wind'] + row['solar'] + row['coal']))
         accumlatedNewGasThisHour =                  min(row['demand'] + row['data'],  (0.9 * maxGas) + row['other'] + row['wind'] + row['solar'] + row['coal'])
         accumlatedNewGas = accumlatedNewGas + accumlatedNewGasThisHour - (row['other'] + row['wind'] + row['solar'] + row['coal'])
+        
+        weeklyDataCenterEnergy = weeklyDataCenterEnergy + row['data']
+        
+        powerSold                = max((row['gas'] + row['other'] + row['wind'] + row['solar'] + row['coal']) - row['demand'], 0) + powerSold
+        powerSoldAfterDataCenter = max((row['gas'] + row['other'] + row['wind'] + row['solar'] + row['coal']) - (row['demand'] + row['data']), 0) + powerSoldAfterDataCenter
+        
+        powerPurchased = max(row['demand'] - (row['gas'] + row['other'] + row['wind'] + row['solar'] + row['coal']), 0) + powerPurchased
+        powerPurchasedAfterDataCenter = max((row['demand'] + row['data']) - (row['gas'] + row['other'] + row['wind'] + row['solar'] + row['coal']), 0) + powerPurchasedAfterDataCenter
+        
         averageWeekDictStackedwData['newGas'].append(accumlatedNewGasThisHour)
         
+        
+    yearlyDataCenterEnergy = 52 * weeklyDataCenterEnergy
+    
     newGasPerYearGwh = (52 * accumlatedNewGas) / 1000.0
     print(str(newGasPerYearGwh) + " GWh of new Gas") 
     
+    print(str(52 * powerSold) + " MWh sold before data center")
+    print(str(52 * powerPurchased) + " MWh purchased before data center")
+    print(str(52 * powerSoldAfterDataCenter) + " MWh sold after data center")
+    print(str(52 * powerPurchasedAfterDataCenter) + " MWh purchased after data center")
+    
+    PricePerMWh = 39.26
+    
+    LossesFromNotSelling = PricePerMWh * 52 * (powerSold - powerSoldAfterDataCenter)
+    LossesFromPurchasing = PricePerMWh * 52 * (powerPurchasedAfterDataCenter - powerPurchased)
+    
+    print("Monetary Loss from using power that would be sold: $" + str(LossesFromNotSelling))
+    print("Monetary Loss from purchasing more power: $" + str(LossesFromPurchasing))
+    
+    
     # https://www.eia.gov/environment/emissions/co2_vol_mass.php
     kgCo2PerMBtu = 52.91
-    BtuPerKwh = 0.000293071
+    MBtuPerGWh = 1e9 * 0.293071 / 1e6 
     efficiency = 0.2
     
-    co2E = newGasPerYearGwh * (1e3 * BtuPerKwh) * kgCo2PerMBtu / efficiency
+    # 2024 cost of gas from 
+    # https://www.eia.gov/dnav/ng/hist/n3035us3m.htm
+    costOfGasPerMBtu = statistics.mean([5.05, 4.80, 3.76, 3.35, 3.18, 3.70, 3.61, 3.10, 3.28, 3.81, 3.92, 5.05])
     
-    print(str(co2E) + " kg of CO2")
+    print("Average cost of gas per MBtu: $" + str(costOfGasPerMBtu))
+    
+    costOfGas = newGasPerYearGwh * (MBtuPerGWh) * costOfGasPerMBtu / efficiency
+    print("Cost of gas purchases: $" + str(costOfGas))
+    
+    co2E = newGasPerYearGwh * (MBtuPerGWh) * kgCo2PerMBtu / efficiency
+    print(str(co2E/ 1e6) + " kT of CO2")
+    
+    totalCostsToTEP = LossesFromNotSelling + LossesFromPurchasing + costOfGas
+    
+    print("Total Cost to TEP: $" + str(totalCostsToTEP))
+    
+    costPerkWh = totalCostsToTEP / (yearlyDataCenterEnergy * 1000)
+    
+    print("Cost per kWh: $" + str(costPerkWh))
+    
     
     if len(xAxis) != 168:
         print("Error: X Axis is not size 168, it is: " + str(len(xAxis)))
