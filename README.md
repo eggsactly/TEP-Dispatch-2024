@@ -10,4 +10,11 @@ Plots the average 2024 dispatch curve to Tucson and the sources of generation th
 ![Average 2024 Dispatch Curve with Data Center](https://i.imgur.com/vbukCeO.png)
 Plots the average 2024 dispatch curve to Tucson and the sources of generation throughout the year with a 200 MWh average load added to the dispatch modeling the data center. The area in pink is the amount of energy generated per week that TEP will likely generate with fracked gas generation. This would mean roughly 859 kilotons of CO2e emissions from the electricity generation. 
 
+In order for prices for consumers to remain stable, the average cost per MWh would need to stay below $150. Currently the average is $40. While that is a significant difference, costs for electricity can frequently exceed that. The maximum price in 2024 for the Palo Verde hub was $171 / MWh. Since demand for electricity is generally inelastic, increasing demands on the grid, without a equal increase in supply, will more frequently push the price of electricity higher, making it more likely to increase costs on consumers. 
 
+Whereas TEP frequently purchases power from the Salt River Project, the utility has signed a 480MW PPA with Google to serve its data centers \[1\] and a Meta Data center was brought online in February \[2\]. 
+
+
+\[1\] [https://www.datacenterdynamics.com/en/news/google-signs-480mw-ppa-in-arizona/](https://www.datacenterdynamics.com/en/news/google-signs-480mw-ppa-in-arizona/)
+
+\[2\] [https://azbigmedia.com/real-estate/commercial-real-estate/meta-announces-mesa-data-center-is-operational/](https://azbigmedia.com/real-estate/commercial-real-estate/meta-announces-mesa-data-center-is-operational/)

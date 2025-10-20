@@ -164,6 +164,8 @@ with open('TEP-Dispatch-2024.csv', newline='') as csvfile:
     print(str(52 * powerSoldAfterDataCenter) + " MWh sold after data center")
     print(str(52 * powerPurchasedAfterDataCenter) + " MWh purchased after data center")
     
+    # 2024 price
+    # https://www.eia.gov/electricity/wholesale/
     PricePerMWh = 39.26
     
     LossesFromNotSelling = PricePerMWh * 52 * (powerSold - powerSoldAfterDataCenter)
