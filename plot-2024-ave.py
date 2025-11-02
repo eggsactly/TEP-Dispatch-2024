@@ -28,10 +28,13 @@ def findWeekOfPeak(dispatch):
     date = ''
     # This loop finds the row of the peak power demand
     for row in dispatch[1:]:
-        if float(row[11]) > largest:
-            largest = float(row[11])
-            indexOfLargest = count
-            date = row[1]
+        try:
+            if float(row[2]) > largest:
+                largest = float(row[2])
+                indexOfLargest = count
+                date = row[1]
+        except ValueError as e:
+            print("Error: " + str(e) + " row: " + str(count))
         count = count + 1
         
     return largest, indexOfLargest, date
@@ -66,7 +69,7 @@ with open('TEP-Dispatch-2024.csv', newline='') as csvfile:
     xAxis = []
     for row in dispatch[1:]:
         if firstIteration:
-            averageWeekList.append({'demand': float(row[2]), 'wind': float(row[6]), 'solar': float(row[7]), 'other': float(row[8]), 'gas': float(row[9]), 'coal': float(row[10]), 'data': float(row[12]), 'weeks': 1})
+            averageWeekList.append({'demand': float(row[2]), 'wind': float(row[6]), 'solar': float(row[7]), 'other': float(row[8]), 'gas': float(row[9]), 'coal': float(row[10]), 'data': float(row[17]), 'weeks': 1})
             xAxis.append(count)
         else:
             try:
@@ -76,7 +79,7 @@ with open('TEP-Dispatch-2024.csv', newline='') as csvfile:
                 averageWeekList[count]['other'] = averageWeekList[count]['other'] + float(row[8])
                 averageWeekList[count]['gas'] = averageWeekList[count]['gas'] + float(row[9])
                 averageWeekList[count]['coal'] = averageWeekList[count]['coal'] + float(row[10])
-                averageWeekList[count]['data'] = averageWeekList[count]['data'] + float(row[12])
+                averageWeekList[count]['data'] = averageWeekList[count]['data'] + float(row[17])
                 averageWeekList[count]['weeks'] = averageWeekList[count]['weeks'] + 1
             except ValueError as e:
                 print("Warning: Missing data on hour " + str(count))

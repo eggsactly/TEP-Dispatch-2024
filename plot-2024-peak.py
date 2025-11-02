@@ -5,6 +5,7 @@ import datetime
 from operator import itemgetter
 import matplotlib.pyplot as plt
 import copy
+import sys
 
 # year month day
 def zeller(y, m, q):
@@ -26,10 +27,13 @@ def findWeekOfPeak(dispatch):
     date = ''
     # This loop finds the row of the peak power demand
     for row in dispatch[1:]:
-        if float(row[11]) > largest:
-            largest = float(row[11])
-            indexOfLargest = count
-            date = row[1]
+        try:
+            if float(row[2]) > largest:
+                largest = float(row[2])
+                indexOfLargest = count
+                date = row[1]
+        except ValueError as e:
+            print("Error: " + str(e) + " row: " + str(count))
         count = count + 1
         
     return largest, indexOfLargest, date
@@ -191,11 +195,11 @@ with open('TEP-Dispatch-2024.csv', newline='') as csvfile:
         coal.append(worstCaseWithStorageColumns[10][count])
         solar.append(worstCaseWithStorageColumns[10][count] + worstCaseWithStorageColumns[7][count])
         wind.append(worstCaseWithStorageColumns[10][count] + worstCaseWithStorageColumns[7][count] + worstCaseWithStorageColumns[6][count])
-        gas.append(min(worstCaseWithStorageColumns[10][count] + worstCaseWithStorageColumns[7][count] + worstCaseWithStorageColumns[6][count] + worstCaseWithStorageColumns[9][count], worstCaseWithStorageColumns[2][count] + worstCaseWithStorageColumns[12][count]))
-        other.append(min(worstCaseWithStorageColumns[10][count] + worstCaseWithStorageColumns[7][count] + worstCaseWithStorageColumns[6][count] + worstCaseWithStorageColumns[9][count] + worstCaseWithStorageColumns[8][count], worstCaseWithStorageColumns[2][count] + worstCaseWithStorageColumns[12][count]))
-        spotPurchases.append(worstCaseWithStorageColumns[2][count] + worstCaseWithStorageColumns[12][count])
-        wh_hours3 = wh_hours3 + int((worstCaseWithStorageColumns[2][count] + worstCaseWithStorageColumns[12][count]) > worstCaseWithStorageColumns[10][count] + worstCaseWithStorageColumns[7][count] + worstCaseWithStorageColumns[6][count] + worstCaseWithStorageColumns[9][count] + worstCaseWithStorageColumns[8][count])
-        wh_purchased3 = wh_purchased3 + max(0, worstCaseWithStorageColumns[2][count] + worstCaseWithStorageColumns[12][count] - (worstCaseWithStorageColumns[10][count] + worstCaseWithStorageColumns[7][count] + worstCaseWithStorageColumns[6][count] + worstCaseWithStorageColumns[9][count] + worstCaseWithStorageColumns[8][count]))
+        gas.append(min(worstCaseWithStorageColumns[10][count] + worstCaseWithStorageColumns[7][count] + worstCaseWithStorageColumns[6][count] + worstCaseWithStorageColumns[9][count], worstCaseWithStorageColumns[2][count] + worstCaseWithStorageColumns[17][count]))
+        other.append(min(worstCaseWithStorageColumns[10][count] + worstCaseWithStorageColumns[7][count] + worstCaseWithStorageColumns[6][count] + worstCaseWithStorageColumns[9][count] + worstCaseWithStorageColumns[8][count], worstCaseWithStorageColumns[2][count] + worstCaseWithStorageColumns[17][count]))
+        spotPurchases.append(worstCaseWithStorageColumns[2][count] + worstCaseWithStorageColumns[17][count])
+        wh_hours3 = wh_hours3 + int((worstCaseWithStorageColumns[2][count] + worstCaseWithStorageColumns[17][count]) > worstCaseWithStorageColumns[10][count] + worstCaseWithStorageColumns[7][count] + worstCaseWithStorageColumns[6][count] + worstCaseWithStorageColumns[9][count] + worstCaseWithStorageColumns[8][count])
+        wh_purchased3 = wh_purchased3 + max(0, worstCaseWithStorageColumns[2][count] + worstCaseWithStorageColumns[17][count] - (worstCaseWithStorageColumns[10][count] + worstCaseWithStorageColumns[7][count] + worstCaseWithStorageColumns[6][count] + worstCaseWithStorageColumns[9][count] + worstCaseWithStorageColumns[8][count]))
         
         count = count + 1
     
