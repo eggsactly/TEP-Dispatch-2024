@@ -50,7 +50,7 @@ with open('TEP-Dispatch-2024.csv', newline='') as csvfile:
     
     maxWidth = max(len(importNames['azps']), len(importNames['epe']), len(importNames['pnm']), len(importNames['srp']), len(importNames['walc']))
     
-    print("Utility".ljust(maxWidth) + "Interchange GWh")
+    print("Utility".ljust(maxWidth) + "Interchange GWh (positive is out, negative is in)")
     print(importNames['azps'].ljust(maxWidth) + str(sum(energyImports['azps'])/1000).ljust(len("Interchange GWh")) + " " + ("%.2f" % (sum(energyImports['azps']) * 100 / totalSum)) + "%")
     print(importNames['epe'].ljust(maxWidth) + str(sum(energyImports['epe'])/1000).ljust(len("Interchange GWh")) + " " + ("%.2f" % (sum(energyImports['epe']) * 100 / totalSum)) + "%")
     print(importNames['pnm'].ljust(maxWidth) + str(sum(energyImports['pnm'])/1000).ljust(len("Interchange GWh")) + " " + ("%.2f" % (sum(energyImports['pnm']) * 100 / totalSum)) + "%")
