@@ -18,3 +18,13 @@ Whereas TEP frequently purchases power from the Salt River Project, the utility 
 \[1\] [https://www.datacenterdynamics.com/en/news/google-signs-480mw-ppa-in-arizona/](https://www.datacenterdynamics.com/en/news/google-signs-480mw-ppa-in-arizona/)
 
 \[2\] [https://azbigmedia.com/real-estate/commercial-real-estate/meta-announces-mesa-data-center-is-operational/](https://azbigmedia.com/real-estate/commercial-real-estate/meta-announces-mesa-data-center-is-operational/)
+
+# Other Tools
+convert-price-data.py - Sums the net energy taken and given to other utilities from TEP
+
+find-net-purchases-2024.py - Creates a list of hourly utility purchase rates. The rates go into column 's' on the TEP dispatch csv files. 
+```
+find-net-purchases-2024.py > 2024-day-ahead-prices.csv 
+```
+
+
