@@ -50,6 +50,12 @@ def stringToDate(date):
     timeInt = int(str(date).split(' ')[1])
     return month, day, year, isPm, timeInt, timeOffsetd
 
+def stringToFloat(s):
+    try:
+        return float(s)
+    except ValueError as e:
+        return 0.0
+
 dispatch = []
 
 TepMaxGas = 1916.0
@@ -65,9 +71,18 @@ with open('TEP-Dispatch-2024.csv', newline='') as csvfile:
     firstIteration = True
     weeks = 0
     averageWeekList = []
+    totalList = {'demand': [], 'wind': [], 'solar': [], 'other': [], 'gas': [], 'coal': [], 'data': []} 
     hoursInWeek = 168
     xAxis = []
     for row in dispatch[1:]:
+        totalList['demand'].append(stringToFloat(row[2]))
+        totalList['wind'].append(stringToFloat(row[6]))
+        totalList['solar'].append(stringToFloat(row[7]))
+        totalList['other'].append(stringToFloat(row[8]))
+        totalList['gas'].append(stringToFloat(row[9]))
+        totalList['coal'].append(stringToFloat(row[10]))
+        totalList['data'].append(stringToFloat(row[17]))
+    
         if firstIteration:
             averageWeekList.append({'demand': float(row[2]), 'wind': float(row[6]), 'solar': float(row[7]), 'other': float(row[8]), 'gas': float(row[9]), 'coal': float(row[10]), 'data': float(row[17]), 'weeks': 1})
             xAxis.append(count)
@@ -94,6 +109,7 @@ with open('TEP-Dispatch-2024.csv', newline='') as csvfile:
     
     # For each day of our average week, divide by the number of days
     for row in averageWeekList:
+        # 'weeks' is a misnomer here, it's really hours in the week 
         row['demand'] = row['demand'] / row['weeks']
         row['wind'] = row['wind'] / row['weeks']
         row['solar'] = row['solar'] / row['weeks']
@@ -128,7 +144,7 @@ with open('TEP-Dispatch-2024.csv', newline='') as csvfile:
         averageWeekDictStacked['other'].append(min(row['demand'], row['other'] + row['gas'] + row['wind'] + row['solar'] + row['coal']))
     
     maxGas = max(averageWeekDict['gas'])
-    print(str(maxGas))
+    print("Max gas: " + str(maxGas))
        
     accumlatedNewGas = 0.0 
     powerSold = 0.0
@@ -158,6 +174,10 @@ with open('TEP-Dispatch-2024.csv', newline='') as csvfile:
         
         
     yearlyDataCenterEnergy = 52 * weeklyDataCenterEnergy
+    
+    totalEnergyGenerated = sum(totalList['wind']) + sum(totalList['solar']) + sum(totalList['other']) + sum(totalList['gas']) + sum(totalList['coal'])
+
+    print(str(totalEnergyGenerated/1000) + " GWh of total genearation")
     
     newGasPerYearGwh = (52 * accumlatedNewGas) / 1000.0
     print(str(newGasPerYearGwh) + " GWh of new Gas") 
