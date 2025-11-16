@@ -11,7 +11,13 @@ with open('TEP-Dispatch-2024.csv', newline='') as csvfile:
     purchaseList = []
     firstIteration = True
     
-    energyImports = {'azps': [], 'epe': [], 'pnm': [], 'srp': [], 'walc': [], 'data': []} 
+    energyImports = {'azps': []
+        , 'epe': []
+        , 'pnm': []
+        , 'srp': []
+        , 'walc': []
+        , 'data': []
+    } 
     
     for row in dispatch[1:]:
         try:
@@ -57,6 +63,7 @@ with open('TEP-Dispatch-2024.csv', newline='') as csvfile:
     print(importNames['srp'].ljust(maxWidth) + str(sum(energyImports['srp'])/1000).ljust(len("Interchange GWh")) + " " + ("%.2f" % (sum(energyImports['srp']) * 100 / totalSum)) + "%")
     print(importNames['walc'].ljust(maxWidth) + str(sum(energyImports['walc'])/1000).ljust(len("Interchange GWh")) + " " + ("%.2f" % (sum(energyImports['walc']) * 100 / totalSum)) + "%")
     
+    # Print net energy imports 
     print("Sum: ".ljust(maxWidth) + str(
         (sum(energyImports['azps']) 
         + sum(energyImports['epe']) 
@@ -64,7 +71,31 @@ with open('TEP-Dispatch-2024.csv', newline='') as csvfile:
         + sum(energyImports['srp']) 
         + sum(energyImports['walc'])
         )/1000))
+    
+    netEnergyInterchange = {}
+    # Calculate net energy sold per utility 
+    for key in energyImports:
+        count = 0
+        netEnergyInterchange[key] = {'imports': 0, 'exports': 0}
+        while count < len(energyImports[key]):
+            value = energyImports[key][count]
+            if value < 0:
+                netEnergyInterchange[key]['imports'] = netEnergyInterchange[key]['imports'] - value
+            else:
+                netEnergyInterchange[key]['exports'] = netEnergyInterchange[key]['exports'] + value
+            count = count + 1
+    
+    # Calculate total energy sold and total energy imported 
+    totalEnergySold = 0.0
+    totalEnergyImported = 0.0
+    for key in energyImports:
+        totalEnergySold = netEnergyInterchange[key]['exports'] + totalEnergySold
+        totalEnergyImported = netEnergyInterchange[key]['imports'] + totalEnergyImported
         
+    print("Total Energy Sold (GWh): " + "%2.f" % (totalEnergySold/1000))    
+    print("Total Energy Imported (GWh): " + "%2.f" % (totalEnergyImported/1000))    
+    
+    
     print("Data center energy use (GWh): " + "%2.f" % (sum(energyImports['data'])/1000))
     
     
