@@ -11,6 +11,21 @@ def stringToFloat(s):
     except ValueError as e:
         return 0.0
 
+# Given a temperature in fahrenheit, return the temperature in celcius 
+def fahrenheitToCelsius(f):
+    return (f - 32) * 5.0/9.0
+
+# Returns the data center energy use, in MW, given temperature in celcius 
+def dataCenterEnergyUse(t):
+    gridHookup = 286.0
+    itLoad = 0.6 * 286.0
+    coolingCOP = 4.0 
+    itTemperature = fahrenheitToCelsius(85.0)
+    maxTemp = fahrenheitToCelsius(125.0)
+    slope = (gridHookup - (itLoad + (coolingCOP * itLoad))) / (maxTemp - itTemperature)
+    coolingLoad = (coolingCOP * itLoad) + (slope * t)
+    return min(gridHookup, itLoad + coolingLoad)
+
 with open('TEP-Dispatch-2024.csv', newline='') as csvfile:
     spamreader = csv.reader(csvfile, delimiter=',', quotechar='|')
     dispatch = []
@@ -42,7 +57,7 @@ with open('TEP-Dispatch-2024.csv', newline='') as csvfile:
         , 'epe': "El Paso Electric Company (EPE): "
         , 'pnm': "Public Service Company of New Mexico (PNM): "
         , 'srp': "Salt River Project (SRP): " 
-        , 'walc': "Western Power Area Administration (WALC): "
+        , 'walc': "Western Power Area AdataCenterEnergyUsedministration (WALC): "
     }
     
     # Read in the data 
@@ -82,8 +97,8 @@ with open('TEP-Dispatch-2024.csv', newline='') as csvfile:
         hourlyRevenue = hourlyExport * energyImports['cost'][count]
         totalRevenue = totalRevenue + hourlyRevenue
         
-        hourlyImportDataC = -1.0 * min(energyImports['azps'][count] + energyImports['epe'][count] + energyImports['pnm'][count] + energyImports['srp'][count] + energyImports['walc'][count] - energyImports['data'][count], 0)
-        hourlyExportDataC = max(energyImports['azps'][count] + energyImports['epe'][count] + energyImports['pnm'][count] + energyImports['srp'][count] + energyImports['walc'][count] - energyImports['data'][count], 0)
+        hourlyImportDataC = -1.0 * min(energyImports['azps'][count] + energyImports['epe'][count] + energyImports['pnm'][count] + energyImports['srp'][count] + energyImports['walc'][count] - dataCenterEnergyUse(energyImports['temp'][count]), 0)
+        hourlyExportDataC = max(energyImports['azps'][count] + energyImports['epe'][count] + energyImports['pnm'][count] + energyImports['srp'][count] + energyImports['walc'][count] - dataCenterEnergyUse(energyImports['temp'][count]), 0)
         totalImportsDataC = totalImportsDataC +  hourlyImportDataC
         totalExportsDataC = totalExportsDataC + hourlyExportDataC
         hourlyCostDataC = hourlyImportDataC * energyImports['cost'][count]
