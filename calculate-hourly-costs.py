@@ -61,6 +61,7 @@ with open('TEP-Dispatch-2024.csv', newline='') as csvfile:
         , 'data': []
         , 'cost': []
         , 'temp': []
+        ,'co2e':[]
     } 
     
     importNames = {'azps': "Arizona Public Service (AZPS): "
@@ -86,6 +87,8 @@ with open('TEP-Dispatch-2024.csv', newline='') as csvfile:
         energyImports['data'].append(stringToFloat(row[17]))
         energyImports['cost'].append(stringToFloat(row[18]))
         energyImports['temp'].append(stringToFloat(row[16]))
+        energyImports['co2e'].append(stringToFloat(row[21]))
+        
         
     totalImports = 0.0
     totalCost = 0.0
@@ -95,6 +98,9 @@ with open('TEP-Dispatch-2024.csv', newline='') as csvfile:
     totalCostDataC = 0.0
     totalExportsDataC = 0.0
     totalRevenueDataC = 0.0
+    co2EDataC = 0.0
+    peakEnergyUseDataC = [0.0, 0.0]
+    energyUsedDataC = 0.0
     # Calculate the energy costs, hour-by-hour 
     count = 0
     while count < len(energyImports['azps']):
@@ -112,8 +118,18 @@ with open('TEP-Dispatch-2024.csv', newline='') as csvfile:
             hourlyImportDataC = -1.0 * min(energyImports['azps'][count] + energyImports['epe'][count] + energyImports['pnm'][count] + energyImports['srp'][count] + energyImports['walc'][count], 0)
             hourlyExportDataC = max(energyImports['azps'][count] + energyImports['epe'][count] + energyImports['pnm'][count] + energyImports['srp'][count] + energyImports['walc'][count], 0)
         else:
-            hourlyImportDataC = -1.0 * min(energyImports['azps'][count] + energyImports['epe'][count] + energyImports['pnm'][count] + energyImports['srp'][count] + energyImports['walc'][count] - dataCenterEnergyUse(tempFactor * energyImports['temp'][count] + tempOffset), 0)
-            hourlyExportDataC = max(energyImports['azps'][count] + energyImports['epe'][count] + energyImports['pnm'][count] + energyImports['srp'][count] + energyImports['walc'][count] - dataCenterEnergyUse(tempFactor * energyImports['temp'][count] + tempOffset), 0)
+            dataCenterUse = dataCenterEnergyUse(tempFactor * energyImports['temp'][count] + tempOffset)
+            energyUsedDataC = energyUsedDataC + dataCenterUse
+            hourlyImportDataC = -1.0 * min(energyImports['azps'][count] + energyImports['epe'][count] + energyImports['pnm'][count] + energyImports['srp'][count] + energyImports['walc'][count] - dataCenterUse, 0)
+            hourlyExportDataC = max(energyImports['azps'][count] + energyImports['epe'][count] + energyImports['pnm'][count] + energyImports['srp'][count] + energyImports['walc'][count] - dataCenterUse, 0)
+            
+            co2EDataC = co2EDataC + (dataCenterUse * energyImports['co2e'][count])
+            if dataCenterUse > peakEnergyUseDataC[0]:
+                if peakEnergyUseDataC[1] == 0.0:
+                    peakEnergyUseDataC[1] = dataCenterUse
+                else:
+                    peakEnergyUseDataC[1] = peakEnergyUseDataC[0]
+                peakEnergyUseDataC[0] = dataCenterUse
             
         totalImportsDataC = totalImportsDataC +  hourlyImportDataC
         totalExportsDataC = totalExportsDataC + hourlyExportDataC
@@ -166,6 +182,8 @@ with open('TEP-Dispatch-2024.csv', newline='') as csvfile:
     print("Difference in energy imports (GWh): " + "%.2f" % ((totalImportsDataC - totalImports)/1000))
     print("Difference in revenue ($): " + "%.2f" % (((totalRevenueDataC - totalRevenue) - (totalCostDataC - totalCost))))
     print("")
-    print("Data center energy use (GWh): " + "%2.f" % (sum(energyImports['data'])/1000))
+    print("Data center energy use (GWh): " + "%2.f" % (energyUsedDataC))
+    print("Data center energy emissions (kg CO2): " + "%2.f" % (co2EDataC))
+    print("Batter Capacity Needed (MWh): " + "%2.f" % (sum(peakEnergyUseDataC)))
     
     
