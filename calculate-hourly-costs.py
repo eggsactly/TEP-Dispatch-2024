@@ -33,6 +33,8 @@ def dataCenterEnergyUse(t):
 costFactor = 1.0
 tempOffset = fahrenheitToCentigrade(0)
 tempFactor = 1.00
+# Setting turnOffDataCenter to True will shut off data center between 6 and 7pm
+turnOffDataCenter = True
 
 with open('TEP-Dispatch-2024.csv', newline='') as csvfile:
     spamreader = csv.reader(csvfile, delimiter=',', quotechar='|')
@@ -105,8 +107,14 @@ with open('TEP-Dispatch-2024.csv', newline='') as csvfile:
         hourlyRevenue = hourlyExport * (costFactor * energyImports['cost'][count])
         totalRevenue = totalRevenue + hourlyRevenue
         
-        hourlyImportDataC = -1.0 * min(energyImports['azps'][count] + energyImports['epe'][count] + energyImports['pnm'][count] + energyImports['srp'][count] + energyImports['walc'][count] - dataCenterEnergyUse(tempFactor * energyImports['temp'][count] + tempOffset), 0)
-        hourlyExportDataC = max(energyImports['azps'][count] + energyImports['epe'][count] + energyImports['pnm'][count] + energyImports['srp'][count] + energyImports['walc'][count] - dataCenterEnergyUse(tempFactor * energyImports['temp'][count] + tempOffset), 0)
+        # Turn off data center at 6pm and 7pm 
+        if turnOffDataCenter and (count % 17 == 0 or count % 18 == 0):
+            hourlyImportDataC = -1.0 * min(energyImports['azps'][count] + energyImports['epe'][count] + energyImports['pnm'][count] + energyImports['srp'][count] + energyImports['walc'][count], 0)
+            hourlyExportDataC = max(energyImports['azps'][count] + energyImports['epe'][count] + energyImports['pnm'][count] + energyImports['srp'][count] + energyImports['walc'][count], 0)
+        else:
+            hourlyImportDataC = -1.0 * min(energyImports['azps'][count] + energyImports['epe'][count] + energyImports['pnm'][count] + energyImports['srp'][count] + energyImports['walc'][count] - dataCenterEnergyUse(tempFactor * energyImports['temp'][count] + tempOffset), 0)
+            hourlyExportDataC = max(energyImports['azps'][count] + energyImports['epe'][count] + energyImports['pnm'][count] + energyImports['srp'][count] + energyImports['walc'][count] - dataCenterEnergyUse(tempFactor * energyImports['temp'][count] + tempOffset), 0)
+            
         totalImportsDataC = totalImportsDataC +  hourlyImportDataC
         totalExportsDataC = totalExportsDataC + hourlyExportDataC
         hourlyCostDataC = hourlyImportDataC * (costFactor * energyImports['cost'][count])
