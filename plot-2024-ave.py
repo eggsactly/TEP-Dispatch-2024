@@ -212,8 +212,8 @@ with open('TEP-Dispatch-2024.csv', newline='') as csvfile:
     costOfGas = newGasPerYearGwh * (MBtuPerGWh) * costOfGasPerMBtu / efficiency
     print("Cost of gas purchases: $" + str(costOfGas))
     
-    co2E = newGasPerYearGwh * (MBtuPerGWh) * kgCo2PerMBtu / efficiency
-    print(str(co2E/ 1e6) + " kT of CO2")
+    co2E_tepGas = newGasPerYearGwh * (MBtuPerGWh) * kgCo2PerMBtu / efficiency
+    print(str(co2E_tepGas/ 1e6) + " kT of CO2")
     
     totalCostsToTEP = LossesFromNotSelling + LossesFromPurchasing + costOfGas
     
