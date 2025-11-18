@@ -22,15 +22,17 @@ def fahrenheitToCentigrade(f):
 def dataCenterEnergyUse(t):
     gridHookup = 286.0
     itLoad = 0.6 * 286.0
-    coolingCOP = 4.0 
+    coolingCOP = 4.396 
     itTemperature = fahrenheitToCelsius(85.0)
-    maxTemp = fahrenheitToCelsius(125.0)
+    maxTemp = fahrenheitToCelsius(120.0)
     slope = (gridHookup - (itLoad + (itLoad/coolingCOP))) / (maxTemp - itTemperature)
-    coolingLoad = (itLoad/coolingCOP) + (slope * t)
+    coolingLoad = (itLoad/coolingCOP) + (slope * (t - itTemperature))
     return min(gridHookup, itLoad + coolingLoad)
 
+# Parameters 
 costFactor = 1.0
 tempOffset = fahrenheitToCentigrade(0)
+tempFactor = 1.00
 
 with open('TEP-Dispatch-2024.csv', newline='') as csvfile:
     spamreader = csv.reader(csvfile, delimiter=',', quotechar='|')
@@ -103,8 +105,8 @@ with open('TEP-Dispatch-2024.csv', newline='') as csvfile:
         hourlyRevenue = hourlyExport * (costFactor * energyImports['cost'][count])
         totalRevenue = totalRevenue + hourlyRevenue
         
-        hourlyImportDataC = -1.0 * min(energyImports['azps'][count] + energyImports['epe'][count] + energyImports['pnm'][count] + energyImports['srp'][count] + energyImports['walc'][count] - dataCenterEnergyUse(energyImports['temp'][count] + tempOffset), 0)
-        hourlyExportDataC = max(energyImports['azps'][count] + energyImports['epe'][count] + energyImports['pnm'][count] + energyImports['srp'][count] + energyImports['walc'][count] - dataCenterEnergyUse(energyImports['temp'][count] + tempOffset), 0)
+        hourlyImportDataC = -1.0 * min(energyImports['azps'][count] + energyImports['epe'][count] + energyImports['pnm'][count] + energyImports['srp'][count] + energyImports['walc'][count] - dataCenterEnergyUse(tempFactor * energyImports['temp'][count] + tempOffset), 0)
+        hourlyExportDataC = max(energyImports['azps'][count] + energyImports['epe'][count] + energyImports['pnm'][count] + energyImports['srp'][count] + energyImports['walc'][count] - dataCenterEnergyUse(tempFactor * energyImports['temp'][count] + tempOffset), 0)
         totalImportsDataC = totalImportsDataC +  hourlyImportDataC
         totalExportsDataC = totalExportsDataC + hourlyExportDataC
         hourlyCostDataC = hourlyImportDataC * (costFactor * energyImports['cost'][count])
