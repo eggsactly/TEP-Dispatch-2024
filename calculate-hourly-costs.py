@@ -30,7 +30,7 @@ def dataCenterEnergyUse(t):
     itTemperature = fahrenheitToCelsius(85.0)
     maxTemp = fahrenheitToCelsius(120.0)
     slope = (gridHookup - (itLoad + (itLoad/coolingCOP))) / (maxTemp - itTemperature)
-    coolingLoad = (itLoad/coolingCOP) + (slope * (t - itTemperature))
+    coolingLoad = max((itLoad/coolingCOP) + (slope * (t - itTemperature)), 0)
     return min(gridHookup, itLoad + coolingLoad)
 
 # Parameters 
