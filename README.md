@@ -29,3 +29,6 @@ find-net-purchases-2024.py > 2024-day-ahead-prices.csv
 
 ./calculate-hourly-costs.py - Calulates cost differences between no data center and the data center based on hourly power purchases 
 
+# Attribution 
+solarpy library by aqreed.
+

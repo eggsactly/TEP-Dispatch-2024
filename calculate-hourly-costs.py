@@ -1,6 +1,10 @@
 #!/usr/bin/python3
 
 import csv
+from numpy import array
+from solarpy import solar_panel
+from datetime import datetime
+import math 
 
 # This script is similar to plot-2024-ave.py, except instead of putting everything
 # into one week for easy visualization, it will calculate across the whole year
@@ -101,6 +105,7 @@ with open('TEP-Dispatch-2024.csv', newline='') as csvfile:
     co2EDataC = 0.0
     peakEnergyUseDataC = [0.0, 0.0]
     energyUsedDataC = 0.0
+    previousDataCenterUse = 0.0
     # Calculate the energy costs, hour-by-hour 
     count = 0
     while count < len(energyImports['azps']):
@@ -123,13 +128,13 @@ with open('TEP-Dispatch-2024.csv', newline='') as csvfile:
             hourlyImportDataC = -1.0 * min(energyImports['azps'][count] + energyImports['epe'][count] + energyImports['pnm'][count] + energyImports['srp'][count] + energyImports['walc'][count] - dataCenterUse, 0)
             hourlyExportDataC = max(energyImports['azps'][count] + energyImports['epe'][count] + energyImports['pnm'][count] + energyImports['srp'][count] + energyImports['walc'][count] - dataCenterUse, 0)
             
+            # We're only looking at storing power for two hours because 6 and 7pm are the most expensive hours 
             co2EDataC = co2EDataC + (dataCenterUse * energyImports['co2e'][count])
-            if dataCenterUse > peakEnergyUseDataC[0]:
-                if peakEnergyUseDataC[1] == 0.0:
-                    peakEnergyUseDataC[1] = dataCenterUse
-                else:
-                    peakEnergyUseDataC[1] = peakEnergyUseDataC[0]
+            if (dataCenterUse + previousDataCenterUse) > (peakEnergyUseDataC[0] + peakEnergyUseDataC[1]):
+                peakEnergyUseDataC[1] = previousDataCenterUse
                 peakEnergyUseDataC[0] = dataCenterUse
+            
+            previousDataCenterUse = dataCenterUse
             
         totalImportsDataC = totalImportsDataC +  hourlyImportDataC
         totalExportsDataC = totalExportsDataC + hourlyExportDataC
@@ -184,6 +189,7 @@ with open('TEP-Dispatch-2024.csv', newline='') as csvfile:
     print("")
     print("Data center energy use (GWh): " + "%2.f" % (energyUsedDataC))
     print("Data center energy emissions (kg CO2): " + "%2.f" % (co2EDataC))
-    print("Batter Capacity Needed (MWh): " + "%2.f" % (sum(peakEnergyUseDataC)))
+    if turnOffDataCenter:
+        print("Battery Capacity Needed for 2 hours (MWh): " + "%2.f" % peakEnergyUseDataC[0] + " + " + "%2.f" % peakEnergyUseDataC[1] + " = " + "%2.f" % (sum(peakEnergyUseDataC)))
     
     
