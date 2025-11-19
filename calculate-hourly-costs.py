@@ -104,8 +104,11 @@ with open('TEP-Dispatch-2024.csv', newline='') as csvfile:
     totalRevenueDataC = 0.0
     co2EDataC = 0.0
     peakEnergyUseDataC = [0.0, 0.0]
+    peakEnergyUseDataC2 = [0.0, 0.0]
+    peakEnergyUseDataC3 = [0.0, 0.0]
     energyUsedDataC = 0.0
     previousDataCenterUse = 0.0
+    dataCenterOffUse = 0.0
     # Calculate the energy costs, hour-by-hour 
     count = 0
     while count < len(energyImports['azps']):
@@ -117,6 +120,9 @@ with open('TEP-Dispatch-2024.csv', newline='') as csvfile:
         totalCost = totalCost + hourlyCost
         hourlyRevenue = hourlyExport * (costFactor * energyImports['cost'][count])
         totalRevenue = totalRevenue + hourlyRevenue
+        
+        if (count % 17 == 0 or count % 18 == 0):
+            dataCenterOffUse = dataCenterOffUse + dataCenterEnergyUse(tempFactor * energyImports['temp'][count] + tempOffset)
         
         # Turn off data center at 6pm and 7pm 
         if turnOffDataCenter and (count % 17 == 0 or count % 18 == 0):
@@ -131,8 +137,13 @@ with open('TEP-Dispatch-2024.csv', newline='') as csvfile:
             # We're only looking at storing power for two hours because 6 and 7pm are the most expensive hours 
             co2EDataC = co2EDataC + (dataCenterUse * energyImports['co2e'][count])
             if (dataCenterUse + previousDataCenterUse) > (peakEnergyUseDataC[0] + peakEnergyUseDataC[1]):
+                peakEnergyUseDataC3[1] = peakEnergyUseDataC2[1]
+                peakEnergyUseDataC3[0] = peakEnergyUseDataC2[0]
+                peakEnergyUseDataC2[1] = peakEnergyUseDataC[1]
+                peakEnergyUseDataC2[0] = peakEnergyUseDataC[0]
                 peakEnergyUseDataC[1] = previousDataCenterUse
                 peakEnergyUseDataC[0] = dataCenterUse
+                
             
             previousDataCenterUse = dataCenterUse
             
@@ -191,5 +202,8 @@ with open('TEP-Dispatch-2024.csv', newline='') as csvfile:
     print("Data center energy emissions (kg CO2): " + "%2.f" % (co2EDataC))
     if turnOffDataCenter:
         print("Battery Capacity Needed for 2 hours (MWh): " + "%2.f" % peakEnergyUseDataC[0] + " + " + "%2.f" % peakEnergyUseDataC[1] + " = " + "%2.f" % (sum(peakEnergyUseDataC)))
+        print("Battery Capacity Needed for 2 hours (MWh): " + "%2.f" % peakEnergyUseDataC2[0] + " + " + "%2.f" % peakEnergyUseDataC2[1] + " = " + "%2.f" % (sum(peakEnergyUseDataC2)))
+        print("Battery Capacity Needed for 2 hours (MWh): " + "%2.f" % peakEnergyUseDataC3[0] + " + " + "%2.f" % peakEnergyUseDataC3[1] + " = " + "%2.f" % (sum(peakEnergyUseDataC3)))
+        print("Data center energy use in that time (MWh): " + str(dataCenterOffUse))
     
     
