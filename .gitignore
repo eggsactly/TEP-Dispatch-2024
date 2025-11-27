@@ -1,2 +1,5 @@
 *.png
 2024-day-ahead-prices.csv
+__pycache__
+*.tar.gz
+
