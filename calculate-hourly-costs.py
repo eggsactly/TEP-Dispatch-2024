@@ -3,7 +3,7 @@
 import csv
 from numpy import array
 from solarpy import solar_panel
-from datetime import datetime
+from datetime import datetime, timedelta
 import math 
 
 # This script is similar to plot-2024-ave.py, except instead of putting everything
@@ -37,8 +37,17 @@ def dataCenterEnergyUse(t):
 costFactor = 1.0
 tempOffset = fahrenheitToCentigrade(0)
 tempFactor = 1.00
+
+# For exploring how many renewables the data center needs 
+# Surface area in meters
+panelSurfaceArea = 0.0
+storageCapacity = 0.0
+panelSurfaceArea = 9000000.0
+storageCapacity = 4170.0
+
+
 # Setting turnOffDataCenter to True will shut off data center between 6 and 7pm
-turnOffDataCenter = True
+turnOffDataCenter = False
 
 with open('TEP-Dispatch-2024.csv', newline='') as csvfile:
     spamreader = csv.reader(csvfile, delimiter=',', quotechar='|')
@@ -111,6 +120,11 @@ with open('TEP-Dispatch-2024.csv', newline='') as csvfile:
     dataCenterOffUse = 0.0
     # Calculate the energy costs, hour-by-hour 
     count = 0
+    
+    dataCenterGridUseWithRenewables = 0.0
+    dataCenterEmissionsWithRenewables = 0.0
+    currentStorage = 0.0
+    
     while count < len(energyImports['azps']):
         hourlyImport = -1.0 * min(energyImports['azps'][count] + energyImports['epe'][count] + energyImports['pnm'][count] + energyImports['srp'][count] + energyImports['walc'][count], 0)
         hourlyExport = max(energyImports['azps'][count] + energyImports['epe'][count] + energyImports['pnm'][count] + energyImports['srp'][count] + energyImports['walc'][count], 0)
@@ -120,6 +134,8 @@ with open('TEP-Dispatch-2024.csv', newline='') as csvfile:
         totalCost = totalCost + hourlyCost
         hourlyRevenue = hourlyExport * (costFactor * energyImports['cost'][count])
         totalRevenue = totalRevenue + hourlyRevenue
+        
+        
         
         if (count % 17 == 0 or count % 18 == 0):
             dataCenterOffUse = dataCenterOffUse + dataCenterEnergyUse(tempFactor * energyImports['temp'][count] + tempOffset)
@@ -145,7 +161,38 @@ with open('TEP-Dispatch-2024.csv', newline='') as csvfile:
                 peakEnergyUseDataC[0] = dataCenterUse
                 
             
+            
             previousDataCenterUse = dataCenterUse
+            
+            # Given renewables (solar) and batteries, calculate grid use 
+            start_date = datetime(2024, 1, 1)
+            target_date = start_date + timedelta(days=count % 24)
+
+            solarAngle = math.radians(-32)
+            panel = solar_panel(panelSurfaceArea, 0.2, id_name='Tucson')  # surface, efficiency and name
+            panel.set_orientation(array([math.sin(solarAngle), 0, -1 * math.cos(solarAngle)]))  # upwards
+            panel.set_position(32.2540, 110.9742, 0)  # Tucson latitude, longitude, altitude
+            panel.set_datetime(datetime(2024, target_date.month, target_date.day, count % 24, 0)) 
+            # Panel output in MWh
+            panelOutput = panel.power()/1e6
+            
+            storageEfficiency = 0.8 # https://www.eia.gov/todayinenergy/detail.php?id=46756
+            # If panel output exceeds the data center use
+            if panelOutput > dataCenterUse:
+                # Add to current storage until we hit capacity 
+                currentStorage = min(storageCapacity, currentStorage + panelOutput - dataCenterUse)
+            else:
+                # If panel and storage exceeds data center needs
+                if panelOutput + (storageEfficiency * currentStorage) > dataCenterUse:
+                    currentStorage = max(0, currentStorage - ((1/storageEfficiency)*(dataCenterUse - panelOutput)))
+                # If storage and solar do not exceed data center needs 
+                else:
+                    # Use what is left in the panels and remove whatever is left in storage 
+                    dataCenterGridUseWithRenewables = dataCenterGridUseWithRenewables + (dataCenterUse - panelOutput - (storageEfficiency * currentStorage))
+                    dataCenterEmissionsWithRenewables = dataCenterEmissionsWithRenewables + ((dataCenterUse - panelOutput - (storageEfficiency * currentStorage)) * energyImports['co2e'][count])
+                    # Zero out storage
+                    currentStorage = 0.0 
+            
             
         totalImportsDataC = totalImportsDataC +  hourlyImportDataC
         totalExportsDataC = totalExportsDataC + hourlyExportDataC
@@ -205,5 +252,6 @@ with open('TEP-Dispatch-2024.csv', newline='') as csvfile:
         print("Battery Capacity Needed for 2 hours (MWh): " + "%2.f" % peakEnergyUseDataC2[0] + " + " + "%2.f" % peakEnergyUseDataC2[1] + " = " + "%2.f" % (sum(peakEnergyUseDataC2)))
         print("Battery Capacity Needed for 2 hours (MWh): " + "%2.f" % peakEnergyUseDataC3[0] + " + " + "%2.f" % peakEnergyUseDataC3[1] + " = " + "%2.f" % (sum(peakEnergyUseDataC3)))
         print("Data center energy use in that time (MWh): " + str(dataCenterOffUse))
-    
+    print("Data Center Grid Use with Renewables (MWh):" + "%2.f" % (dataCenterGridUseWithRenewables))
+    print("Data Center Emissions with Renewables (CO2e):" + "%2.f" % (dataCenterEmissionsWithRenewables))
     
