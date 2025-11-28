@@ -70,6 +70,7 @@ with open('TEP-Dispatch-2024.csv', newline='') as csvfile:
     plt.title("Project Blue, Tucson (2024) (Hypothetical)")
     ax.set_ylabel('Energy Use (MWh)')
     ax.set_xlabel('Time of Day')
+    plt.ylim(0, 286)
 
     bplot = ax.boxplot(fruit_weights,
                        patch_artist=True,  # fill with color
