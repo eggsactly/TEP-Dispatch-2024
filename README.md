@@ -29,8 +29,6 @@ find-net-purchases-2024.py > 2024-day-ahead-prices.csv
 
 ./get-temperature-data.py - Retrieves hour-by-hour temperature data for Tucson.
 
-./plot-2024-dc-energy-use.py - Produces project-blue-energy-use-bar-and-whisker.png, which shows energy consumption based on our model.
-
 # Attribution 
 solarpy library by aqreed.
 
