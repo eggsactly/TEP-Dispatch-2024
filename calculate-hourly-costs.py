@@ -97,6 +97,7 @@ with open('TEP-Dispatch-2024.csv', newline='') as csvfile:
     dataCenterOffUse = 0.0
     # Calculate the energy costs, hour-by-hour 
     count = 0
+    energyProducedBySolar = 0.0
     
     dataCenterGridUseWithRenewables = 0.0
     dataCenterEmissionsWithRenewables = 0.0
@@ -152,7 +153,7 @@ with open('TEP-Dispatch-2024.csv', newline='') as csvfile:
             panel.set_datetime(datetime(2024, target_date.month, target_date.day, count % 24, 0)) 
             # Panel output in MWh
             panelOutput = panel.power()/1e6
-            
+            energyProducedBySolar = energyProducedBySolar + panelOutput
             storageEfficiency = 0.8 # https://www.eia.gov/todayinenergy/detail.php?id=46756
             # If panel output exceeds the data center use
             if panelOutput > dataCenterUse:
@@ -229,6 +230,7 @@ with open('TEP-Dispatch-2024.csv', newline='') as csvfile:
         print("Battery Capacity Needed for 2 hours (MWh): " + "%2.f" % peakEnergyUseDataC2[0] + " + " + "%2.f" % peakEnergyUseDataC2[1] + " = " + "%2.f" % (sum(peakEnergyUseDataC2)))
         print("Battery Capacity Needed for 2 hours (MWh): " + "%2.f" % peakEnergyUseDataC3[0] + " + " + "%2.f" % peakEnergyUseDataC3[1] + " = " + "%2.f" % (sum(peakEnergyUseDataC3)))
         print("Data center energy use in that time (MWh): " + str(dataCenterOffUse))
+    print("Energy Produced by Solar Panels (MWh): " + "%2.f" % (energyProducedBySolar))
     print("Data Center Grid Use with Renewables (MWh):" + "%2.f" % (dataCenterGridUseWithRenewables))
     print("Data Center Emissions with Renewables (CO2e):" + "%2.f" % (dataCenterEmissionsWithRenewables))
     
