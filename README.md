@@ -2,6 +2,13 @@
 This repository shows Tucson/TEP energy demand changes as a result of the Project Blue data center Energy Service Agreement (ESA), Arizona Corporation Commission (ACC) docket [E-01933A-25-0187](https://edocket.azcc.gov/search/docket-search/item-detail/29640). This repository uses 2024 as a test year for assessing the impact of the data center on consumer rate increases. 
 
 Running: 
+`$ ./plot-2024-dc-energy-use.py` will produce this plot
+
+![Project Blue Thermal Model](https://i.imgur.com/mFYkJGk.png)
+
+This is the model of Project Blue's daily energy use, over the year 2024. 
+
+Running: 
 `$ ./plot-2024-ave.py` will produce the following plots. 
 
 ![Average 2024 Dispatch Curve](https://i.imgur.com/G5P9OLS.png)
