@@ -232,5 +232,5 @@ with open('TEP-Dispatch-2024.csv', newline='') as csvfile:
         print("Data center energy use in that time (MWh): " + str(dataCenterOffUse))
     print("Energy Produced by Solar Panels (MWh): " + "%2.f" % (energyProducedBySolar))
     print("Data Center Grid Use with Renewables (MWh):" + "%2.f" % (dataCenterGridUseWithRenewables))
-    print("Data Center Emissions with Renewables (CO2e):" + "%2.f" % (dataCenterEmissionsWithRenewables))
+    print("Data Center Emissions with Renewables (kg CO2e):" + "%2.f" % (dataCenterEmissionsWithRenewables))
     
