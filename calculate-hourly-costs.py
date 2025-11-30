@@ -6,8 +6,10 @@ from solarpy import solar_panel
 from datetime import datetime, timedelta
 import math 
 from lib.ProjectBlue import * 
-# This script is similar to plot-2024-ave.py, except instead of putting everything
-# into one week for easy visualization, it will calculate across the whole year
+import matplotlib.pyplot as plt
+# calculate-hourly-costs.py is similar to plot-2024-ave.py, except instead of 
+# putting everything into one week for easy visualization, it will calculate 
+# across the whole year
 
 
 # Parameters 
@@ -19,12 +21,15 @@ tempFactor = 1.00
 # Surface area in meters
 panelSurfaceArea = 0.0
 storageCapacity = 0.0
-panelSurfaceArea = 9000000.0
+panelSurfaceArea = 6700000.0
 storageCapacity = 4170.0
 
 
 # Setting turnOffDataCenter to True will shut off data center between 6 and 7pm
+plotWithoutDataCenter = False
 turnOffDataCenter = False
+plotOption2 = True
+plotOption3 = False
 
 with open('TEP-Dispatch-2024.csv', newline='') as csvfile:
     spamreader = csv.reader(csvfile, delimiter=',', quotechar='|')
@@ -117,13 +122,17 @@ with open('TEP-Dispatch-2024.csv', newline='') as csvfile:
         
         if (count % 17 == 0 or count % 18 == 0):
             dataCenterOffUse = dataCenterOffUse + dataCenterEnergyUse(tempFactor * energyImports['temp'][count] + tempOffset)
+            if plotOption2:
+                energyImports['other'][count] = energyImports['other'][count] + dataCenterEnergyUse(tempFactor * energyImports['temp'][count] + tempOffset)
         
         # Turn off data center at 6pm and 7pm 
         if turnOffDataCenter and (count % 17 == 0 or count % 18 == 0):
             hourlyImportDataC = -1.0 * min(energyImports['azps'][count] + energyImports['epe'][count] + energyImports['pnm'][count] + energyImports['srp'][count] + energyImports['walc'][count], 0)
             hourlyExportDataC = max(energyImports['azps'][count] + energyImports['epe'][count] + energyImports['pnm'][count] + energyImports['srp'][count] + energyImports['walc'][count], 0)
+            energyImports['data'][count] = 0.0
         else:
             dataCenterUse = dataCenterEnergyUse(tempFactor * energyImports['temp'][count] + tempOffset)
+            energyImports['data'][count] = dataCenterUse
             energyUsedDataC = energyUsedDataC + dataCenterUse
             hourlyImportDataC = -1.0 * min(energyImports['azps'][count] + energyImports['epe'][count] + energyImports['pnm'][count] + energyImports['srp'][count] + energyImports['walc'][count] - dataCenterUse, 0)
             hourlyExportDataC = max(energyImports['azps'][count] + energyImports['epe'][count] + energyImports['pnm'][count] + energyImports['srp'][count] + energyImports['walc'][count] - dataCenterUse, 0)
@@ -159,17 +168,28 @@ with open('TEP-Dispatch-2024.csv', newline='') as csvfile:
             if panelOutput > dataCenterUse:
                 # Add to current storage until we hit capacity 
                 currentStorage = min(storageCapacity, currentStorage + panelOutput - dataCenterUse)
+                if plotOption3:
+                    energyImports['solar'][count] = energyImports['solar'][count] + dataCenterUse
             else:
                 # If panel and storage exceeds data center needs
                 if panelOutput + (storageEfficiency * currentStorage) > dataCenterUse:
                     currentStorage = max(0, currentStorage - ((1/storageEfficiency)*(dataCenterUse - panelOutput)))
+                    if plotOption3:
+                        energyImports['solar'][count] = energyImports['solar'][count] + panelOutput
+                        energyImports['other'][count] = energyImports['other'][count] + ((1/storageEfficiency)*(dataCenterUse - panelOutput))
                 # If storage and solar do not exceed data center needs 
                 else:
                     # Use what is left in the panels and remove whatever is left in storage 
                     dataCenterGridUseWithRenewables = dataCenterGridUseWithRenewables + (dataCenterUse - panelOutput - (storageEfficiency * currentStorage))
                     dataCenterEmissionsWithRenewables = dataCenterEmissionsWithRenewables + ((dataCenterUse - panelOutput - (storageEfficiency * currentStorage)) * energyImports['co2e'][count])
+                    
+                    if plotOption3:
+                        energyImports['solar'][count] = energyImports['solar'][count] + panelOutput
+                        energyImports['other'][count] = energyImports['other'][count] + (storageEfficiency * currentStorage)
+                    
                     # Zero out storage
-                    currentStorage = 0.0 
+                    currentStorage = 0.0
+                    
             
             
         totalImportsDataC = totalImportsDataC +  hourlyImportDataC
@@ -223,7 +243,7 @@ with open('TEP-Dispatch-2024.csv', newline='') as csvfile:
     print("Difference in energy imports (GWh): " + "%.2f" % ((totalImportsDataC - totalImports)/1000))
     print("Difference in revenue ($): " + "%.2f" % (((totalRevenueDataC - totalRevenue) - (totalCostDataC - totalCost))))
     print("")
-    print("Data center energy use (GWh): " + "%2.f" % (energyUsedDataC))
+    print("Data center energy use (MWh): " + "%2.f" % (energyUsedDataC))
     print("Data center energy emissions (kg CO2): " + "%2.f" % (co2EDataC))
     if turnOffDataCenter:
         print("Battery Capacity Needed for 2 hours (MWh): " + "%2.f" % peakEnergyUseDataC[0] + " + " + "%2.f" % peakEnergyUseDataC[1] + " = " + "%2.f" % (sum(peakEnergyUseDataC)))
@@ -234,3 +254,118 @@ with open('TEP-Dispatch-2024.csv', newline='') as csvfile:
     print("Data Center Grid Use with Renewables (MWh):" + "%2.f" % (dataCenterGridUseWithRenewables))
     print("Data Center Emissions with Renewables (kg CO2e):" + "%2.f" % (dataCenterEmissionsWithRenewables))
     
+    
+    hoursInWeek = 24 * 7
+    # Adding plots for options 
+    averageWeekList = {'demand': [0.0] * hoursInWeek, 'wind': [0.0] * hoursInWeek, 'solar': [0.0] * hoursInWeek, 'other': [0.0] * hoursInWeek, 'gas': [0.0] * hoursInWeek, 'coal': [0.0] * hoursInWeek, 'data': [0.0] * hoursInWeek, 'newGas': [0.0] * hoursInWeek, 'weeks': [0.0] * hoursInWeek} 
+    
+    count = 0
+    while count < len(energyImports['demand']):
+
+        averageWeekList['demand'][count % hoursInWeek] = averageWeekList['demand'] [count % hoursInWeek]+ energyImports['demand'][count]
+        averageWeekList['wind'][count % hoursInWeek] = averageWeekList['wind'][count % hoursInWeek] + energyImports['wind'][count]
+        averageWeekList['solar'][count % hoursInWeek] = averageWeekList['solar'][count % hoursInWeek] + energyImports['solar'][count]
+        averageWeekList['other'][count % hoursInWeek] = averageWeekList['other'][count % hoursInWeek] + energyImports['other'][count]
+        averageWeekList['gas'][count % hoursInWeek] = averageWeekList['gas'][count % hoursInWeek] + energyImports['gas'][count]
+        averageWeekList['coal'][count % hoursInWeek] = averageWeekList['coal'][count % hoursInWeek] + energyImports['coal'][count]
+        averageWeekList['data'][count % hoursInWeek] = averageWeekList['data'][count % hoursInWeek] + energyImports['data'][count]
+        averageWeekList['weeks'][count % hoursInWeek] = averageWeekList['weeks'][count % hoursInWeek] + 1
+          
+        count = count + 1
+    
+    # For each day of our average week, divide by the number of days
+    count = 0
+    while count < hoursInWeek:
+        # 'weeks' is a misnomer here, it's really hours in the week 
+        averageWeekList['demand'][count] = averageWeekList['demand'][count] / averageWeekList['weeks'][count]
+        averageWeekList['wind'][count] = averageWeekList['wind'][count] / averageWeekList['weeks'][count]
+        averageWeekList['solar'][count] = averageWeekList['solar'][count] / averageWeekList['weeks'][count]
+        averageWeekList['other'][count] = averageWeekList['other'][count] / averageWeekList['weeks'][count]
+        averageWeekList['gas'][count] = averageWeekList['gas'][count] / averageWeekList['weeks'][count]
+        averageWeekList['coal'][count] = averageWeekList['coal'][count] / averageWeekList['weeks'][count]
+        averageWeekList['data'][count] = averageWeekList['data'][count] / averageWeekList['weeks'][count]
+        count = count + 1
+    
+    averageWeekListSorted = {'demand': [0.0] * hoursInWeek, 'wind': [0.0] * hoursInWeek, 'solar': [0.0] * hoursInWeek, 'other': [0.0] * hoursInWeek, 'gas': [0.0] * hoursInWeek, 'coal': [0.0] * hoursInWeek, 'data': [0.0] * hoursInWeek, 'newGas': [0.0] * hoursInWeek, 'weeks': [0.0] * hoursInWeek} 
+    
+    idList = []
+    xAxis = []
+    count = 0
+    while count < hoursInWeek:
+        idList.append(count)
+        xAxis.append(count)
+        count = count + 1
+    
+    averageWeekListSorted['demand'], idList = zip(*sorted(zip(averageWeekList['demand'], idList), reverse=True))
+    
+    count = 0
+    while count < hoursInWeek:
+        # 'weeks' is a misnomer here, it's really hours in the week 
+        averageWeekListSorted['wind'][count] = averageWeekList['wind'][idList[count]]
+        averageWeekListSorted['solar'][count] = averageWeekList['solar'][idList[count]]
+        averageWeekListSorted['other'][count] = averageWeekList['other'][idList[count]]
+        averageWeekListSorted['gas'][count] = averageWeekList['gas'][idList[count]]
+        averageWeekListSorted['coal'][count] = averageWeekList['coal'][idList[count]]
+        averageWeekListSorted['data'][count] = averageWeekList['data'][idList[count]]
+        count = count + 1
+    
+    averageWeekDictStacked = {'demand': [], 'wind': [], 'solar': [], 'other': [], 'gas': [], 'coal': [], 'data': [], 'newGas': []}
+    
+    count = 0
+    while count < hoursInWeek:
+        if plotWithoutDataCenter:
+            averageWeekDictStacked['demand'].append(averageWeekListSorted['demand'][count] )
+            averageWeekDictStacked['coal'].append(min(averageWeekListSorted['demand'][count] , averageWeekListSorted['coal'][count]))
+            averageWeekDictStacked['solar'].append(min(averageWeekListSorted['demand'][count] , averageWeekListSorted['solar'][count] + averageWeekListSorted['coal'][count]))
+            averageWeekDictStacked['wind'].append(min(averageWeekListSorted['demand'][count] , averageWeekListSorted['wind'][count] + averageWeekListSorted['solar'][count] + averageWeekListSorted['coal'][count]))
+            averageWeekDictStacked['gas'].append(min(averageWeekListSorted['demand'][count] , averageWeekListSorted['gas'][count] + averageWeekListSorted['wind'][count] + averageWeekListSorted['solar'][count] + averageWeekListSorted['coal'][count]))
+            averageWeekDictStacked['other'].append(min(averageWeekListSorted['demand'][count] , averageWeekListSorted['other'][count] + averageWeekListSorted['gas'][count] + averageWeekListSorted['wind'][count] + averageWeekListSorted['solar'][count] + averageWeekListSorted['coal'][count]))
+        else:
+            averageWeekDictStacked['demand'].append(averageWeekListSorted['demand'][count] + averageWeekListSorted['data'][count])
+            averageWeekDictStacked['coal'].append(min(averageWeekListSorted['demand'][count] + averageWeekListSorted['data'][count], averageWeekListSorted['coal'][count]))
+            averageWeekDictStacked['solar'].append(min(averageWeekListSorted['demand'][count] + averageWeekListSorted['data'][count], averageWeekListSorted['solar'][count] + averageWeekListSorted['coal'][count]))
+            averageWeekDictStacked['wind'].append(min(averageWeekListSorted['demand'][count] + averageWeekListSorted['data'][count], averageWeekListSorted['wind'][count] + averageWeekListSorted['solar'][count] + averageWeekListSorted['coal'][count]))
+            averageWeekDictStacked['gas'].append(min(averageWeekListSorted['demand'][count] + averageWeekListSorted['data'][count], averageWeekListSorted['gas'][count] + averageWeekListSorted['wind'][count] + averageWeekListSorted['solar'][count] + averageWeekListSorted['coal'][count]))
+            averageWeekDictStacked['other'].append(min(averageWeekListSorted['demand'][count] + averageWeekListSorted['data'][count], averageWeekListSorted['other'][count] + averageWeekListSorted['gas'][count] + averageWeekListSorted['wind'][count] + averageWeekListSorted['solar'][count] + averageWeekListSorted['coal'][count]))
+        
+        count = count + 1
+    
+    # Plot the data to a .png file 
+    fig = plt.figure(figsize=(10, 9), dpi=100)
+    
+    plt.plot(xAxis, averageWeekDictStacked['demand'], label="demand", color='black')
+    plt.fill_between(xAxis, averageWeekDictStacked['demand'], label="energy imports", color='grey')
+    plt.fill_between(xAxis, averageWeekDictStacked['other'], label="other", color='white')
+    plt.fill_between(xAxis, averageWeekDictStacked['gas'], label="fracked gas", color='brown')
+    plt.fill_between(xAxis, averageWeekDictStacked['wind'], label="wind", color='blue')
+    plt.fill_between(xAxis, averageWeekDictStacked['solar'], label="solar", color='yellow')
+    plt.fill_between(xAxis, averageWeekDictStacked['coal'], label="coal", color='black')
+    
+    
+    plt.xlim(0, 167)
+    plt.ylim(0, max(averageWeekDictStacked['demand']))
+    plt.xlabel("Hour of Week (sorted)")  # Set x-axis label
+    plt.ylabel("Energy Demand (MWh)")  # Set x-axis label
+
+    
+    plt.legend()
+    if plotWithoutDataCenter:
+        plt.title("TEP Dispatch Curve Average of 2024")
+        plt.savefig('2024-ave.png', dpi=100)
+    # Option 3
+    elif plotOption2:
+        plt.title("TEP Dispatch Curve Average of 2024 with Data Center and High Demand Storage")
+        plt.savefig('Option-2-Demand.png', dpi=100)
+    elif plotOption3:
+        plt.title("TEP Dispatch Curve Average of 2024 with Data Center and Full Solar and Storage")
+        plt.savefig('Option-3-Demand.png', dpi=100)
+    # Option 1
+    elif turnOffDataCenter:
+        plt.title("TEP Dispatch Curve Average of 2024 with Data Center and Demand Management")
+        plt.savefig('Option-1-Demand.png', dpi=100)
+    # option zero
+    else:
+        plt.title("TEP Dispatch Curve Average of 2024 with Data Center")
+        plt.savefig('Option-0-Demand.png', dpi=100)
+    #plt.show()
+    plt.clf()

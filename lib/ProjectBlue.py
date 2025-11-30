@@ -11,7 +11,7 @@ def fahrenheitToCelsius(f):
 def fahrenheitToCentigrade(f):
     return f * 5.0/9.0
 
-# Returns the data center energy use, in MW, given temperature in celcius 
+# Returns the data center energy use, in MWh, given temperature in celcius 
 def dataCenterEnergyUse(t):
     gridHookup = 286.0
     itLoad = 0.6 * 286.0
