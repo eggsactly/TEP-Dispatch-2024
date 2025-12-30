@@ -201,7 +201,10 @@ with open('TEP-Dispatch-2024.csv', newline='') as csvfile:
     # https://www.eia.gov/environment/emissions/co2_vol_mass.php
     kgCo2PerMBtu = 52.91
     MBtuPerGWh = 1e9 * 0.293071 / 1e6 
-    efficiency = 0.2
+    # Gas efficiency based on 
+    # https://www.ipieca.org/resources/energy-efficiency-compendium/combined-cycle-gas-turbines-2022
+    # https://betterbuildingssolutioncenter.energy.gov/sites/default/files/attachments/CHP_Reciprocating_Engines.pdf
+    efficiency = 0.44 
     
     # 2024 cost of gas from 
     # https://www.eia.gov/dnav/ng/hist/n3035us3m.htm

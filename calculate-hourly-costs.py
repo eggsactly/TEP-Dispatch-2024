@@ -254,7 +254,6 @@ with open('TEP-Dispatch-2024.csv', newline='') as csvfile:
     print("Data Center Grid Use with Renewables (MWh):" + "%2.f" % (dataCenterGridUseWithRenewables))
     print("Data Center Emissions with Renewables (kg CO2e):" + "%2.f" % (dataCenterEmissionsWithRenewables))
     
-    
     hoursInWeek = 24 * 7
     # Adding plots for options 
     averageWeekList = {'demand': [0.0] * hoursInWeek, 'wind': [0.0] * hoursInWeek, 'solar': [0.0] * hoursInWeek, 'other': [0.0] * hoursInWeek, 'gas': [0.0] * hoursInWeek, 'coal': [0.0] * hoursInWeek, 'data': [0.0] * hoursInWeek, 'newGas': [0.0] * hoursInWeek, 'weeks': [0.0] * hoursInWeek} 
