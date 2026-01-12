@@ -12,9 +12,8 @@ def fahrenheitToCentigrade(f):
     return f * 5.0/9.0
 
 # Returns the data center energy use, in MWh, given temperature in celcius 
-def dataCenterEnergyUse(t):
-    gridHookup = 286.0
-    itLoad = 0.6 * 286.0
+def dataCenterEnergyUse(t, gridHookup=286.0):
+    itLoad = 0.6 * gridHookup
     coolingCOP = 4.396 
     itTemperature = fahrenheitToCelsius(85.0)
     maxTemp = fahrenheitToCelsius(120.0)

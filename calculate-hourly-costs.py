@@ -27,9 +27,19 @@ storageCapacity = 4170.0
 
 # Setting turnOffDataCenter to True will shut off data center between 6 and 7pm
 plotWithoutDataCenter = False
-turnOffDataCenter = False
 plotOption2 = True
 plotOption3 = False
+turnOffDataCenter = False
+finalBuild = True
+
+gridHookup=286.0
+if finalBuild:
+    plotWithoutDataCenter = False
+    plotOption2 = False
+    plotOption3 = False
+    turnOffDataCenter = False
+    gridHookup=700.0
+
 
 with open('TEP-Dispatch-2024.csv', newline='') as csvfile:
     spamreader = csv.reader(csvfile, delimiter=',', quotechar='|')
@@ -121,9 +131,9 @@ with open('TEP-Dispatch-2024.csv', newline='') as csvfile:
         
         
         if (count % 17 == 0 or count % 18 == 0):
-            dataCenterOffUse = dataCenterOffUse + dataCenterEnergyUse(tempFactor * energyImports['temp'][count] + tempOffset)
+            dataCenterOffUse = dataCenterOffUse + dataCenterEnergyUse(tempFactor * energyImports['temp'][count] + tempOffset, gridHookup)
             if plotOption2:
-                energyImports['other'][count] = energyImports['other'][count] + dataCenterEnergyUse(tempFactor * energyImports['temp'][count] + tempOffset)
+                energyImports['other'][count] = energyImports['other'][count] + dataCenterEnergyUse(tempFactor * energyImports['temp'][count] + tempOffset, gridHookup)
         
         # Turn off data center at 6pm and 7pm 
         if turnOffDataCenter and (count % 17 == 0 or count % 18 == 0):
@@ -131,7 +141,7 @@ with open('TEP-Dispatch-2024.csv', newline='') as csvfile:
             hourlyExportDataC = max(energyImports['azps'][count] + energyImports['epe'][count] + energyImports['pnm'][count] + energyImports['srp'][count] + energyImports['walc'][count], 0)
             energyImports['data'][count] = 0.0
         else:
-            dataCenterUse = dataCenterEnergyUse(tempFactor * energyImports['temp'][count] + tempOffset)
+            dataCenterUse = dataCenterEnergyUse(tempFactor * energyImports['temp'][count] + tempOffset, gridHookup)
             energyImports['data'][count] = dataCenterUse
             energyUsedDataC = energyUsedDataC + dataCenterUse
             hourlyImportDataC = -1.0 * min(energyImports['azps'][count] + energyImports['epe'][count] + energyImports['pnm'][count] + energyImports['srp'][count] + energyImports['walc'][count] - dataCenterUse, 0)
@@ -363,6 +373,9 @@ with open('TEP-Dispatch-2024.csv', newline='') as csvfile:
         plt.title("TEP Dispatch Curve Average of 2024 with Data Center and Demand Management")
         plt.savefig('Option-1-Demand.png', dpi=100)
     # option zero
+    elif finalBuild:
+        plt.title("TEP Dispatch Curve Average of 2024 with Data Center Final Build")
+        plt.savefig('final-build-Demand.png', dpi=100)
     else:
         plt.title("TEP Dispatch Curve Average of 2024 with Data Center")
         plt.savefig('Option-0-Demand.png', dpi=100)
