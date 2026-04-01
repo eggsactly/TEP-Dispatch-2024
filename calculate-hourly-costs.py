@@ -7,6 +7,8 @@ from datetime import datetime, timedelta
 import math 
 from lib.ProjectBlue import * 
 import matplotlib.pyplot as plt
+import sys
+import getopt
 # calculate-hourly-costs.py is similar to plot-2024-ave.py, except instead of 
 # putting everything into one week for easy visualization, it will calculate 
 # across the whole year
@@ -26,13 +28,79 @@ storageCapacity = 4170.0
 
 
 # Setting turnOffDataCenter to True will shut off data center between 6 and 7pm
-plotWithoutDataCenter = False
-plotOption2 = True
+plotWithoutDataCenter = True
+plotOption2 = False
 plotOption3 = False
 turnOffDataCenter = False
-finalBuild = True
+finalBuild = False
 
 gridHookup=286.0
+
+try:
+    opts, args = getopt.gnu_getopt(sys.argv[1:], 'hsvo:',
+                                   ['help', 'sorted', 'verbose', 'option='])
+except getopt.error as e:
+    print("Error: %s\n\nTry 'runner.py --help' for more information" % e, file=sys.stderr)
+    sys.exit(1)
+
+sortPlots = False
+log_all = False
+plotOption = 0
+for opt, arg in opts:
+    if opt in ('-h', '--help'):
+        usage()
+        sys.exit()
+    elif opt in ('-s', '--sorted'):
+        sortPlots = True
+    elif opt in ('-v', '--verbose'):
+        log_all = True
+    elif opt in ('-o', '--option'):
+        plotOption = int(arg)
+
+
+# Baseline 2024
+if plotOption == -1:
+    plotWithoutDataCenter = True
+    plotOption2 = False
+    plotOption3 = False
+    turnOffDataCenter = False
+    finalBuild = False
+# 2024 with data center with no modifications 
+elif plotOption == 0:
+    plotWithoutDataCenter = False
+    plotOption2 = False
+    plotOption3 = False
+    turnOffDataCenter = False
+    finalBuild = False  
+# Data center with demand side management
+elif plotOption == 1:
+    plotWithoutDataCenter = False
+    plotOption2 = False
+    plotOption3 = False
+    turnOffDataCenter = True
+    finalBuild = False  
+# Data center with batteries to replace demand side management
+elif plotOption == 2:
+    plotWithoutDataCenter = False
+    plotOption2 = True
+    plotOption3 = False
+    turnOffDataCenter = False
+    finalBuild = False 
+# Data center wtih full renewable power
+elif plotOption == 3:
+    plotWithoutDataCenter = False
+    plotOption2 = False
+    plotOption3 = True
+    turnOffDataCenter = False
+    finalBuild = False 
+# Full build data center with no intervention. 
+elif plotOption == 4:
+    plotWithoutDataCenter = False
+    plotOption2 = False
+    plotOption3 = False
+    turnOffDataCenter = False
+    finalBuild = True 
+    
 if finalBuild:
     plotWithoutDataCenter = False
     plotOption2 = False
@@ -305,7 +373,10 @@ with open('TEP-Dispatch-2024.csv', newline='') as csvfile:
         xAxis.append(count)
         count = count + 1
     
-    averageWeekListSorted['demand'], idList = zip(*sorted(zip(averageWeekList['demand'], idList), reverse=True))
+    if sortPlots:
+        averageWeekListSorted['demand'], idList = zip(*sorted(zip(averageWeekList['demand'], idList), reverse=True))
+    else:
+        averageWeekListSorted = averageWeekList
     
     count = 0
     while count < hoursInWeek:
@@ -353,10 +424,12 @@ with open('TEP-Dispatch-2024.csv', newline='') as csvfile:
     
     plt.xlim(0, 167)
     plt.ylim(0, max(averageWeekDictStacked['demand']))
-    plt.xlabel("Hour of Week (sorted)")  # Set x-axis label
+    if sortPlots:
+        plt.xlabel("Hour of Week (sorted)")  # Set x-axis label
+    else:
+        plt.xlabel("Hour of Week")  # Set x-axis label
     plt.ylabel("Energy Demand (MWh)")  # Set x-axis label
 
-    
     plt.legend()
     if plotWithoutDataCenter:
         plt.title("TEP Dispatch Curve Average of 2024")

@@ -17,6 +17,15 @@ Plots the average 2024 dispatch curve to Tucson and the sources of generation th
 ![Average 2024 Dispatch Curve with Data Center](https://i.imgur.com/vbukCeO.png)
 Plots the average 2024 dispatch curve to Tucson and the sources of generation throughout the year with a 200 MWh average load added to the dispatch modeling the data center. The area in pink is the amount of energy generated per week that TEP will likely generate with fracked gas generation. The fracked gas would mean roughly 859 kilotons of CO2e emissions from the new gas portions of the electricity generation. 
 
+Running
+`$ ./generate-plots.sh` will produce the following plots used in the CCES data center report:
+- 2024-ave.png
+- Option-2-Demand.png
+- Option-3-Demand.png
+- Option-1-Demand.png
+- final-build-Demand.png
+- Option-0-Demand.png
+
 # Other Tools
 convert-price-data.py - Sums the net energy taken and given to other utilities from TEP
 
