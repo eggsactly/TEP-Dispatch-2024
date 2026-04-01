@@ -38,6 +38,8 @@ find-net-purchases-2024.py > 2024-day-ahead-prices.csv
 
 ./get-temperature-data.py - Retrieves hour-by-hour temperature data for Tucson.
 
+./Solar-Yearly-Calculation.py - given the manufacturer specs, calculates how much energy will be generated in Tucson, from a solar panel, in a given year (assume no cloudy days).
+
 # Attribution 
 solarpy library by aqreed.
 
