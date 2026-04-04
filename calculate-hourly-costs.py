@@ -412,7 +412,7 @@ with open('TEP-Dispatch-2024.csv', newline='') as csvfile:
     
     # Plot the data to a .png file 
     fig = plt.figure(figsize=(10, 9), dpi=100)
-    fig.set_size_inches(11.0, 8.5)
+    fig.set_size_inches(8.5, 11.0)
     
     plt.plot(xAxis, averageWeekDictStacked['demand'],
              label="demand", color='#2f2f2f', linewidth=2)
@@ -421,7 +421,7 @@ with open('TEP-Dispatch-2024.csv', newline='') as csvfile:
                      label="energy imports", color='#b0b0b0')   # soft gray
 
     plt.fill_between(xAxis, averageWeekDictStacked['other'],
-                     label="other", color='#e0e0e0')            # very light gray
+                     label="battery", color='#e0e0e0')            # very light gray
 
     plt.fill_between(xAxis, averageWeekDictStacked['gas'],
                      label="fracked gas", color='#c97a3d')      # muted orange-brown
@@ -444,27 +444,29 @@ with open('TEP-Dispatch-2024.csv', newline='') as csvfile:
         plt.xlabel("Hour of Week", fontsize=16)  # Set x-axis label
     plt.ylabel("Energy Demand (MWh)", fontsize=16)  # Set x-axis label
 
+    titleFontSize=12
+
     plt.legend()
     if plotWithoutDataCenter:
-        plt.title("TEP Dispatch Curve Average of 2024", fontsize=16)
+        plt.title("TEP Dispatch Curve Average of 2024", fontsize=titleFontSize)
         plt.savefig('2024-ave.png', dpi=100)
     # Option 3
     elif plotOption2:
-        plt.title("TEP Dispatch Curve Average of 2024 with Data Center and High Demand Storage", fontsize=16)
+        plt.title("TEP Dispatch Curve Average of 2024 with Data Center and High Demand Storage", fontsize=titleFontSize)
         plt.savefig('Option-2-Demand.png', dpi=100)
     elif plotOption3:
-        plt.title("TEP Dispatch Curve Average of 2024 with Data Center and Full Solar and Storage", fontsize=16)
+        plt.title("TEP Dispatch Curve Average of 2024 with Data Center and Full Solar and Storage", fontsize=titleFontSize)
         plt.savefig('Option-3-Demand.png', dpi=100)
     # Option 1
     elif turnOffDataCenter:
-        plt.title("TEP Dispatch Curve Average of 2024 with Data Center and Demand Management", fontsize=16)
+        plt.title("TEP Dispatch Curve Average of 2024 with Data Center and Demand Management", fontsize=titleFontSize)
         plt.savefig('Option-1-Demand.png', dpi=100)
     # option zero
     elif finalBuild:
-        plt.title("TEP Dispatch Curve Average of 2024 with Data Center Final Build", fontsize=16)
+        plt.title("TEP Dispatch Curve Average of 2024 with Data Center Final Build", fontsize=titleFontSize)
         plt.savefig('final-build-Demand.png', dpi=100)
     else:
-        plt.title("TEP Dispatch Curve Average of 2024 with Data Center", fontsize=16)
+        plt.title("TEP Dispatch Curve Average of 2024 with Data Center", fontsize=titleFontSize)
         plt.savefig('Option-0-Demand.png', dpi=100)
     #plt.show()
     plt.clf()
